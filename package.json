@@ -1,0 +1,94 @@
+{
+  "name": "pybricks",
+  "displayName": "Pybricks Hub Controller for VSCode",
+  "description": "A Visual Studio Code extension to interact with LEGO® Hubs running the Pybricks firmware.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "publisher": "dusongpei",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dsp05/pybricks-vscode.git"
+  },
+  "icon": "icon.png",
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pybricks.connectDevice",
+        "title": "Pybricks: Connect Device"
+      },
+      {
+        "command": "pybricks.disconnectDevice",
+        "title": "Pybricks: Disconnect Device"
+      },
+      {
+        "command": "pybricks.compileAndRun",
+        "title": "Pybricks: Compile and Run"
+      },
+      {
+        "command": "pybricks.stopUserProgram",
+        "title": "Pybricks: Stop User Program"
+      },
+      {
+        "command": "pybricks.startUserProgram",
+        "title": "Pybricks: Start User Program"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pybricksExtension",
+          "title": "Pybricks",
+          "icon": "asset/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "pybricksExtension": [
+        {
+          "id": "pybricks",
+          "name": "Pybricks",
+          "icon": "asset/icon.svg"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/resolve": "^1.20.6",
+    "@types/vscode": "^1.101.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@abandonware/noble": "^1.9.2-26",
+    "@pybricks/mpy-cross-v6": "^2.0.0",
+    "@pybricks/python-program-analysis": "^2.0.0",
+    "resolve": "^1.22.10"
+  }
+}
