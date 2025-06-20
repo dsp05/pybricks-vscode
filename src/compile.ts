@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { parse, walk } from '@pybricks/python-program-analysis';
-import resolveSync from 'resolve';
 import { compile } from '@pybricks/mpy-cross-v6';
 import path from 'path';
 
@@ -50,12 +49,11 @@ export async function compileAsync(): Promise<Blob> {
       }
     }
 
-    const artifactPath = resolveSync.sync('@pybricks/mpy-cross-v6/build/mpy-cross-v6.wasm');
     const compiled = await compile(
       module.path,
       module.content,
       undefined,
-      artifactPath
+      undefined,
     );
     if (compiled.status !== 0 || !compiled.mpy) {
       throw new Error(`Failed to compile ${module.name}`);
