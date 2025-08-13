@@ -29,8 +29,9 @@ export async function compileAndRunAsync() {
   await char.writeAsync(createUserProgramMetaBuffer(0), false);
   await char.writeAsync(createUserProgramMetaBuffer(blob.size), false);
 
-  for (let offset = 0; offset < blob.size; offset += maxWriteSize) {
-    const chunk = blob.slice(offset, offset + maxWriteSize);
+  const writeSize = maxWriteSize - 5; // 5 bytes for the header
+  for (let offset = 0; offset < blob.size; offset += writeSize) {
+    const chunk = blob.slice(offset, offset + writeSize);
     const buffer = createWriteUserRamBuffer(offset, new Uint8Array(await chunk.arrayBuffer()));
     await char.writeAsync(buffer, false);
   }

@@ -60,8 +60,8 @@ export async function compileAsync(): Promise<Blob> {
     }
 
     parts.push(encodeUInt32LE(compiled.mpy.length));
-    parts.push(cString(module.name));
-    parts.push(compiled.mpy);
+    parts.push(cString(module.name) as BlobPart);
+    parts.push(compiled.mpy as BlobPart);
 
     checkedModules.add(module.name);
   }
