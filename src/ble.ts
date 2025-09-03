@@ -1,19 +1,25 @@
-import noble, { Peripheral } from "@abandonware/noble";
+import noble, { Characteristic, Peripheral } from "@abandonware/noble";
 import * as vscode from 'vscode';
-import { PYBRICKS_SERVICE_UUID } from "./constants";
+import { PYBRICKS_CONTROL_EVENT_CHARACTERISTIC_UUID, PYBRICKS_HUB_CAP_CHARACTERISTIC_UUID, PYBRICKS_SERVICE_UUID } from "./constants";
 import { retryWithTimeout } from "./async";
+
+const outputChannel = vscode.window.createOutputChannel("Pybricks");
 
 class BLE {
   constructor(
     private device: Peripheral | null = null,
     private status: 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error' = 'disconnected',
-    private allDevices: { [localName: string]: Peripheral } = {}
+    private allDevices: { [localName: string]: Peripheral } = {},
+    public ctrlEventChar: Characteristic | null = null,
+    public maxWriteSize: number | null = null,
+    public maxUserProgramSize: number | null = null,
   ) { }
 
   public async disconnectAsync() {
     if (this.device && this.device.state === 'connected') {
       try {
         this.Status = 'disconnecting';
+        await this.ctrlEventChar?.unsubscribeAsync();
         await this.device.disconnectAsync();
         this.Status = 'disconnected';
       } catch (error) {
@@ -51,6 +57,27 @@ class BLE {
         onChange && onChange();
       });
       this.device = peripheral;
+
+      const { characteristics } = await this.device.discoverSomeServicesAndCharacteristicsAsync(
+        [PYBRICKS_SERVICE_UUID],
+        [PYBRICKS_CONTROL_EVENT_CHARACTERISTIC_UUID, PYBRICKS_HUB_CAP_CHARACTERISTIC_UUID]
+      );
+      this.ctrlEventChar = characteristics[0];
+      const buffer = await characteristics[1].readAsync();
+      this.maxWriteSize = buffer.readUInt16LE(0);
+      this.maxUserProgramSize = buffer.readUInt32LE(6);
+      await this.ctrlEventChar.subscribeAsync();
+      this.ctrlEventChar.on('data', (data, isNotification) => {
+        if (!isNotification) {
+          return;
+        }
+        const flag = data.readUInt8(0);
+        if (flag !== 0x01) { // Ignore echo
+          return;
+        }
+        outputChannel.append(data.toString('utf8', 1));
+      });
+
       this.Status = 'connected';
       onChange && onChange();
       vscode.window.showInformationMessage(`Connected to ${peripheral.advertisement.localName}`);
