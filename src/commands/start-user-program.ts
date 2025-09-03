@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { PYBRICKS_CONTROL_EVENT_CHARACTERISTIC_UUID, PYBRICKS_SERVICE_UUID } from '../constants';
 import { createStartUserProgramBuffer } from './command-utils';
 import { Device } from '../ble';
 
@@ -11,11 +10,7 @@ export async function startUserProgramAsync() {
     return;
   }
 
-  const { characteristics } = await Device.Current.discoverSomeServicesAndCharacteristicsAsync(
-    [PYBRICKS_SERVICE_UUID],
-    [PYBRICKS_CONTROL_EVENT_CHARACTERISTIC_UUID]
-  );
-  const char = characteristics[0];
+  const char = Device.ctrlEventChar!;
   await char.writeAsync(createStartUserProgramBuffer(), false);
   vscode.window.showInformationMessage('User program started.');
 }
