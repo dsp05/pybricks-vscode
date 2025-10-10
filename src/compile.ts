@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { parse, walk } from '@pybricks/python-program-analysis';
 import { compile } from '@pybricks/mpy-cross-v6';
 import path from 'path';
+import { getEntryPointFile } from './state';
 
 type Module = {
   name: string;
@@ -11,12 +12,37 @@ type Module = {
 
 export async function compileAsync(): Promise<Blob> {
   await vscode.commands.executeCommand('workbench.action.files.saveAll');
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    throw new Error('No active text editor found. Please open a Python file to compile.');
+
+  const entryPointFile = getEntryPointFile();
+  let targetFile: vscode.Uri;
+  let content: string;
+
+  if (entryPointFile) {
+    // Use the set entrypoint file
+    targetFile = entryPointFile;
+    try {
+      // Check if file exists
+      await vscode.workspace.fs.stat(targetFile);
+      const fileContent = await vscode.workspace.fs.readFile(targetFile);
+      content = Buffer.from(fileContent).toString('utf8');
+    } catch (error) {
+      const fileName = path.basename(targetFile.fsPath);
+      throw new Error(`Failed to read entrypoint file "${fileName}": File not found or not accessible. Please update your entrypoint file using the "Set Entrypoint" command.`);
+    }
+  } else {
+    // Fall back to active editor
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      throw new Error('No entrypoint file set and no active text editor found. Please set an entrypoint file using the "Set Entrypoint" command or open a Python file to compile.');
+    }
+    if (editor.document.languageId !== 'python') {
+      throw new Error('No entrypoint file set and active file is not a Python file. Please set an entrypoint file using the "Set Entrypoint" command or open a Python file to compile.');
+    }
+    targetFile = editor.document.uri;
+    content = editor.document.getText();
   }
-  const content = editor.document.getText();
-  const folder = path.dirname(editor.document.uri.fsPath);
+
+  const folder = path.dirname(targetFile.fsPath);
 
   const parts: BlobPart[] = [];
 

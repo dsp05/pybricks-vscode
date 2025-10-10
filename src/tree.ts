@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { Device } from './ble';
+import { getEntryPointFile } from './state';
+import path from 'path';
 
 class TreeItem extends vscode.TreeItem {
   constructor(
@@ -25,9 +27,10 @@ class TreeItem extends vscode.TreeItem {
 const connectDevice = new TreeItem("Connect Device", "Connect Device", 'pybricks.connectDevice', 'link');
 const disconnectDevice = new TreeItem("Disconnect Device", "Disconnect Device", 'pybricks.disconnectDevice', 'debug-disconnect');
 const actions = new TreeItem("Actions", "Actions", '', '', vscode.TreeItemCollapsibleState.Expanded);
-const compileAndRun = new TreeItem("Compile and Run", "Compile and Run", 'pybricks.compileAndRun', 'run-all');
-const startUserProgram = new TreeItem("Start User Program", "Start User Program", 'pybricks.startUserProgram', 'debug-start');
-const stopUserProgram = new TreeItem("Stop", "Stop User Program", 'pybricks.stopUserProgram', 'debug-stop');
+const setEntryPoint = new TreeItem("Set Entrypoint", "Set Entrypoint", 'pybricks.setEntryPoint', 'gear');
+const compileAndRun = new TreeItem("Compile and Start Program", "Compile and Start Program", 'pybricks.compileAndRun', 'run-all');
+const startUserProgram = new TreeItem("Start Program", "Start Program", 'pybricks.startUserProgram', 'debug-start');
+const stopUserProgram = new TreeItem("Stop Program", "Stop Program", 'pybricks.stopUserProgram', 'debug-stop');
 
 class TreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 
@@ -37,6 +40,15 @@ class TreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
   getTreeItem(element: TreeItem): TreeItem {
     if (element === disconnectDevice) {
       element.label = Device.Current ? `Disconnect from ${Device.Current.advertisement.localName}` : 'Disconnect';
+    } else if (element === setEntryPoint) {
+      // Update the Set Entrypoint title to include current entrypoint name
+      const entryPointFile = getEntryPointFile();
+      if (entryPointFile) {
+        const fileName = path.basename(entryPointFile.fsPath);
+        element.label = `Set Entrypoint (${fileName})`;
+      } else {
+        element.label = 'Set Entrypoint';
+      }
     }
     return element;
   }
@@ -49,7 +61,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
         actions,
       ] : [connectDevice];
     } else if (element === actions) {
-      return [compileAndRun, startUserProgram, stopUserProgram];
+      return [compileAndRun, startUserProgram, stopUserProgram, setEntryPoint];
     }
   }
 
