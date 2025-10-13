@@ -2,10 +2,13 @@ import noble, { Characteristic, Peripheral } from "@abandonware/noble";
 import * as vscode from 'vscode';
 import { PYBRICKS_CONTROL_EVENT_CHARACTERISTIC_UUID, PYBRICKS_HUB_CAP_CHARACTERISTIC_UUID, PYBRICKS_SERVICE_UUID } from "./constants";
 import { retryWithTimeout } from "./async";
+import { Tree } from "./tree";
 
 const outputChannel = vscode.window.createOutputChannel("Pybricks");
 
 class BLE {
+  private messageBuffer = ''; // Buffer to accumulate partial messages
+
   constructor(
     private device: Peripheral | null = null,
     private status: 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error' = 'disconnected',
@@ -22,6 +25,8 @@ class BLE {
         await this.ctrlEventChar?.unsubscribeAsync();
         await this.device.disconnectAsync();
         this.Status = 'disconnected';
+        // Clear message buffer on disconnect
+        this.messageBuffer = '';
       } catch (error) {
         this.Status = 'error';
       }
@@ -42,6 +47,10 @@ class BLE {
 
     try {
       this.Status = 'connecting';
+      // Clear logs and message buffer when connecting to a new device
+      Tree.clearLogs();
+      this.messageBuffer = '';
+
       await retryWithTimeout(async () => {
         console.log(`Trying to connect to ${name}...`);
         try {
@@ -75,7 +84,23 @@ class BLE {
         if (flag !== 0x01) { // Ignore echo
           return;
         }
-        outputChannel.append(data.toString('utf8', 1));
+        const message = data.toString('utf8', 1);
+        // Add to output channel immediately (preserve original behavior)
+        outputChannel.append(message);
+
+        // Buffer the message and process complete lines
+        this.messageBuffer += message;
+        const lines = this.messageBuffer.split('\n');
+
+        // Keep the last part (might be incomplete line) in buffer
+        this.messageBuffer = lines.pop() || '';
+
+        // Add complete lines to tree
+        for (const line of lines) {
+          if (line.length > 0) { // Only add non-empty lines
+            Tree.addLog(line);
+          }
+        }
       });
 
       this.Status = 'connected';
