@@ -5,12 +5,17 @@ import {
 } from './command-utils';
 import { Device } from '../ble';
 import { compileAsync } from '../compile';
+import { Tree } from '../tree';
 
 export async function compileAndRunAsync() {
   if (!Device.Current) {
     vscode.window.showErrorMessage('No device selected. Please connect to a Pybricks device first.');
     return;
   }
+
+  // Clear logs before starting the program
+  Tree.clearLogs();
+
   vscode.window.showInformationMessage('Compiling user program...');
 
   const blob = await compileAsync();
@@ -34,5 +39,5 @@ export async function compileAndRunAsync() {
   await char.writeAsync(createStartUserProgramBuffer(), false);
 
   vscode.window.showInformationMessage('User program compiled and started successfully.');
-};
+}
 

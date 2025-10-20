@@ -4,6 +4,12 @@ All notable changes to the "pybricks" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.6] - 2025-10-13
+
+### Added
+
+- Hub output logging in sidebar tree view with timestamps
+
 ## [0.0.5] - 2025-10-10
 
 ### Added
